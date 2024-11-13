@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulário para PDF - Paciente</title>
+    <!-- Incluindo a biblioteca jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Formulário de Identificação do Paciente</h2>
+
+<form id="formulario-paciente">
+    <label for="nome-paciente">Nome do paciente:</label>
+    <input type="text" id="nome-paciente" placeholder="Digite o nome do paciente" required>
+
+    <label for="prontuario">Prontuário nº:</label>
+    <input type="text" id="prontuario" placeholder="Digite o número do prontuário" required>
+
+    <label for="data-nascimento">Data de Nascimento:</label>
+    <input type="date" id="data-nascimento" required>
+
+    <label for="servico">Serviço:</label>
+    <select id="servico" required>
+        <option value="">Selecione o serviço</option>
+        <option value="Cirurgia Geral">Cirurgia Geral</option>
+        <option value="Cirurgia Plástica">Cirurgia Plástica</option>
+        <option value="Proctologia">Proctologia</option>
+        <option value="Dermatologia">Dermatologia</option>
+        <option value="Saúde do Homem">Saúde do Homem</option>
+        <option value="Cirurgia do Pé">Cirurgia do Pé</option>
+        <option value="Cirurgia da Mão">Cirurgia da Mão</option>
+    </select>
+
+    <label for="data">Data:</label>
+    <input type="date" id="data" required>
+
+    <label for="circulante">Circulante:</label>
+    <input type="text" id="circulante" placeholder="Digite o nome do circulante" required>
+
+    <label for="identificacao-peca">Identificação da Peça:</label>
+    <textarea id="identificacao-peca" rows="4" placeholder="Descreva a identificação da peça" required></textarea>
+
+    <button type="button" onclick="gerarPDF()">Gerar PDF</button>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        // Preencher automaticamente o campo de data com a data atual no formato dd/mm/aaaa considerando o fuso horário BRT (UTC-3)
+        const today = new Date();
+        today.setHours(today.getHours() - 3);  // Ajuste para fuso horário BRT (UTC-3)
+        const formattedDate = today.toLocaleDateString('pt-BR').split('/').reverse().join('-');
+        document.getElementById('data').value = formattedDate;
+    });
+
+    async function gerarPDF() {
+        // Importando jsPDF
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'landscape', unit: 'cm', format: [8, 4] });
+
+        // Capturando os valores dos campos do formulário
+        const nomePaciente = document.getElementById('nome-paciente').value;
+        const prontuario = document.getElementById('prontuario').value;
+        const dataNascimento = document.getElementById('data-nascimento').value.split('-').reverse().join('/'); // Formato dd/mm/aaaa
+        const servico = document.getElementById('servico').value;
+        const data = document.getElementById('data').value.split('-').reverse().join('/'); // Formato dd/mm/aaaa
+        const circulante = document.getElementById('circulante').value;
+        const identificacaoPeca = document.getElementById('identificacao-peca').value;
+
+        // Ajustando o layout para melhorar o espaçamento e evitar sobreposição
+        doc.setFontSize(9);
+        doc.text(`Nome: ${nomePaciente}`, 0.3, 0.5);
+        doc.text(`Prontuário nº: ${prontuario}    Data de nasc.: ${dataNascimento}`, 0.3, 1.1);
+        doc.text(`Serviço: ${servico}`, 0.3, 1.7);
+        doc.text(`Data: ${data}    Circulante: ${circulante}`, 0.3, 2.3); // Formato dd/mm/aaaa
+        doc.text("Ident. da Peça:", 0.3, 2.9);
+        doc.text(identificacaoPeca, 0.3, 3.3, { maxWidth: 7.0 });
+
+        // Gerando o PDF
+        doc.save('etiqueta_paciente.pdf');
+    }
+</script>
+
+</body>
+</html>
