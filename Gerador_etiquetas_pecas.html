@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Etiquetas - UERJ/PPC/UCAMB</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255, 255, 255, 0.05) 10px,
+                rgba(255, 255, 255, 0.05) 20px
+            );
+            animation: movePattern 20s linear infinite;
+        }
+
+        @keyframes movePattern {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .logo {
+            max-width: 300px;
+            height: auto;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            font-weight: 300;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.95em;
+            transition: color 0.3s ease;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        input:hover, select:hover, textarea:hover {
+            border-color: #bdc3c7;
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 12px center;
+            background-repeat: no-repeat;
+            background-size: 16px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: inherit;
+        }
+
+        .btn-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .btn-generate {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-generate::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-generate:hover::before {
+            left: 100%;
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-generate:active {
+            transform: translateY(-1px);
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        .form-group input:valid, .form-group select:valid, .form-group textarea:valid {
+            border-color: #27ae60;
+        }
+
+        .form-group input:invalid:not(:focus):not(:placeholder-shown),
+        .form-group select:invalid:not(:focus),
+        .form-group textarea:invalid:not(:focus):not(:placeholder-shown) {
+            border-color: #e74c3c;
+            background-color: #fdf2f2;
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 1px solid #c3e6cb;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .logo {
+                max-width: 250px;
+            }
+
+            .form-container {
+                padding: 25px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .btn-generate {
+                padding: 15px 30px;
+                font-size: 1em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .logo {
+                max-width: 200px;
+            }
+
+            .form-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="./Logo-UERJ-PPC-2022_UNIVERSITARIA.png" alt="Logo UERJ PPC" class="logo">
+            <h1>Gerador de Etiquetas</h1>
+            <p>Sistema de Geração de Etiquetas para Peças Cirúrgicas</p>
+        </div>
+
+        <div class="form-container">
+            <form id="formulario-paciente" onsubmit="return validarCampos()">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="nome-paciente">Nome do paciente <span class="required">*</span></label>
+                        <input type="text" id="nome-paciente" placeholder="Digite o nome completo do paciente" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="nome-mae">Nome da Mãe <span class="required">*</span></label>
+                        <input type="text" id="nome-mae" placeholder="Digite o nome da mãe do paciente" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="prontuario">Prontuário nº <span class="required">*</span></label>
+                        <input type="text" id="prontuario" placeholder="Digite o número do prontuário" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="data-nascimento">Data de Nascimento <span class="required">*</span></label>
+                        <input type="date" id="data-nascimento" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="servico">Serviço <span class="required">*</span></label>
+                        <select id="servico" required>
+                            <option value="">Selecione o serviço</option>
+                            <option value="Cirurgia Geral">Cirurgia Geral</option>
+                            <option value="Cirurgia Plástica">Cirurgia Plástica</option>
+                            <option value="Proctologia">Proctologia</option>
+                            <option value="Dermatologia">Dermatologia</option>
+                            <option value="Saúde do Homem">Saúde do Homem</option>
+                            <option value="Cirurgia do Pé">Cirurgia do Pé</option>
+                            <option value="Cirurgia da Mão">Cirurgia da Mão</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="data">Data <span class="required">*</span></label>
+                        <input type="date" id="data" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="circulante">Circulante <span class="required">*</span></label>
+                        <input type="text" id="circulante" placeholder="Digite o nome do circulante" required>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="identificacao-peca">Identificação da Peça <span class="required">*</span></label>
+                        <textarea id="identificacao-peca" rows="4" placeholder="Descreva detalhadamente a identificação da peça" required></textarea>
+                    </div>
+                </div>
+
+                <div class="btn-container">
+                    <button type="submit" class="btn-generate">Gerar PDF</button>
+                </div>
+            </form>
+
+            <div class="success-message" id="success-message">
+                PDF gerado com sucesso! O download iniciará automaticamente.
+            </div>
+        </div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        // Preencher a data atual automaticamente no campo "Data"
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const today = new Date();
+            today.setHours(today.getHours() - 3);
+            const formattedDate = today.toLocaleDateString('pt-BR').split('/').reverse().join('-');
+            document.getElementById('data').value = formattedDate;
+        });
+
+        // Função para validar os campos antes de gerar o PDF
+        function validarCampos() {
+            const campos = [
+                { id: 'nome-paciente', nome: 'Nome do paciente' },
+                { id: 'nome-mae', nome: 'Nome da Mãe' },
+                { id: 'prontuario', nome: 'Prontuário' },
+                { id: 'data-nascimento', nome: 'Data de Nascimento' },
+                { id: 'servico', nome: 'Serviço' },
+                { id: 'data', nome: 'Data' },
+                { id: 'circulante', nome: 'Circulante' },
+                { id: 'identificacao-peca', nome: 'Identificação da Peça' }
+            ];
+
+            for (const campo of campos) {
+                const valor = document.getElementById(campo.id).value;
+                if (!valor) {
+                    alert(`Por favor, preencha o campo ${campo.nome}`);
+                    return false;
+                }
+            }
+
+            // Mostrar loading
+            document.getElementById('loading').classList.add('show');
+            
+            // Simular delay para mostrar loading
+            setTimeout(() => {
+                gerarPDF();
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('success-message').classList.add('show');
+                
+                // Remover mensagem de sucesso após 3 segundos
+                setTimeout(() => {
+                    document.getElementById('success-message').classList.remove('show');
+                }, 3000);
+            }, 1000);
+
+            return false;
+        }
+
+        // Função para gerar o PDF com os dados preenchidos
+        async function gerarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape', unit: 'cm', format: [8, 4] });
+
+            const margemSuperiorInferior = 0.5; // Margem superior e inferior simétrica de 0.5 cm
+            const incrementoEspacoEntreLinhas = 0.4; // Incremento de 0.4 cm para o espaçamento entre a primeira e a segunda linha
+            let currentY = margemSuperiorInferior;
+
+            const nomePaciente = document.getElementById('nome-paciente').value;
+            const nomeMae = document.getElementById('nome-mae').value;
+            const prontuario = document.getElementById('prontuario').value;
+            const dataNascimento = document.getElementById('data-nascimento').value.split('-').reverse().join('/');
+            const servico = document.getElementById('servico').value;
+            const data = document.getElementById('data').value.split('-').reverse().join('/');
+            const circulante = document.getElementById('circulante').value;
+            const identificacaoPeca = document.getElementById('identificacao-peca').value;
+
+            // Adicionar a linha "UERJ / PPC / UCAMB" alinhada à direita
+            doc.setFontSize(10);
+            doc.text("UERJ / PPC / UCAMB", 7.8, currentY, { align: "right" });
+            currentY += incrementoEspacoEntreLinhas;
+
+            // Adicionar o restante das informações no PDF, mantendo a margem simétrica
+            doc.setFontSize(9);
+            doc.text(`Nome: ${nomePaciente}`, 0.3, currentY);
+            currentY += 0.5;
+            doc.text(`Nome da Mãe: ${nomeMae}`, 0.3, currentY);
+            currentY += 0.5;
+            doc.text(`Prontuário nº: ${prontuario}    Data de nasc.: ${dataNascimento}`, 0.3, currentY);
+            currentY += 0.5;
+            doc.text(`Serviço: ${servico}`, 0.3, currentY);
+            currentY += 0.5;
+            doc.text(`Data: ${data}    Circulante: ${circulante}`, 0.3, currentY);
+            currentY += 0.5;
+            doc.text(`Ident. da Peça: ${identificacaoPeca}`, 0.3, currentY, { maxWidth: 7.0 });
+
+            // Ajustar a borda inferior adicionando um espaço simétrico
+            currentY += margemSuperiorInferior;
+
+            // Salvar o PDF com o nome especificado
+            doc.save('etiqueta_paciente.pdf');
+        }
+    </script>
+</body>
+</html>
